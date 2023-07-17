@@ -1,0 +1,133 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 1%;
+    background: #afd8f3;
+}
+
+h1 {
+    text-align: center;
+    margin: 1vh;
+    color: #4c87af;
+    font-size: calc(2vw + 2vh + 1vmin);
+    line-height: 1.2em;
+    transition: font-size 0.5s ease;
+}
+
+
+button {
+    background-color: #4c87af;
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    cursor: pointer;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 25%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+
+    /* give the button a little bit of depth */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    /* give a border to the button */
+    border: 1px solid #4c87af;
+
+    min-width: 80px;
+    min-height: 80px;
+}
+
+button:hover {
+    background-color: #7cc6f8;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+}
+
+@media (max-width: 767px) {
+    button {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    button {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+
+form {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+pre {
+    font-family: 'Consolas', Monaco, monospace;
+    font-size: 14px;
+    margin: 0;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    overflow-x: scroll;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 600px;
+    border-radius: 5px;
+}
+
+#dropzone {
+    background-color: #f4f4f4;
+    border: 2px dashed #ddd;
+    padding: 50px;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-style: italic;
+    color: #777;
+}
+
+#songCounterContainer {
+    text-align: left;
+    font-size: 18px;
+    font-weight: bold;
+    color: #4c87af;
+}
+
+.spacer {
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+#popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(76, 135, 175, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 999;
+    display: none;
+    transition: all 0.3s;
+
+    font-size: 5rem;
+    font-weight: bold;
+    text-align: center;
+}
