@@ -1,2 +1,4 @@
 # Spotify Playlist Randomizer
- I got tired of dealing with their "shuffle" function, so I use this to shuffle the links of all the spotify songs, which allows the user to copy and paste songs into a text file, and then reshuffles the links
+
+ I got tired of dealing with spotify's baseline shuffle function, so I wrote up a very simple piece of code to shuffle a text file of spotify song links.
+ May implement a way to interact with spotify's api in the future.
