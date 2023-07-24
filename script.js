@@ -102,3 +102,21 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('copyBtn').disabled = true;
     }
 });
+
+function shufflePlaylist(playlistId) {
+    fetch(`getPlaylistTracks.php?playlist_id=${playlistId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            // Display the shuffled playlist
+            const playlistContainer = document.getElementById('playlistContainer');
+            playlistContainer.innerHTML = data;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
