@@ -1,4 +1,11 @@
 <?php
+
+require __DIR__ . '/../../vendor/autoload.php';
+
+// use environment variables
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -12,8 +19,8 @@ if (isset($_GET['code'])) {
         'grant_type' => 'authorization_code',
         'code' => $code,
         'redirect_uri' => 'http://localhost/Playlist_Randomizer/Spotify-Playlist-Randomizer/callback.php',
-        'client_id' => "c21ff8453209440cb1b84c09435be0c2",
-        'client_secret' => "2959c1ff340c4948b073360d9a66ef65"
+        'client_id' => $_ENV['CLIENT_ID'],
+        'client_secret' => $_ENV['CLIENT_SECRET']
     ];
 
     $options = [

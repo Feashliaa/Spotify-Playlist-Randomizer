@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Shuffler</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -17,6 +17,15 @@
     <div class="container">
         <div class="spacer">
             <?php
+
+            require __DIR__ . '/../../vendor/autoload.php';
+
+
+
+            // use environment variables
+            $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+            $dotenv->load();
+
             ini_set('display_errors', 1);
             ini_set('display_startup_errors', 1);
             error_reporting(E_ALL);
@@ -24,8 +33,8 @@
             session_start();
 
             // Your Spotify application credentials
-            $clientID = 'c21ff8453209440cb1b84c09435be0c2';
-            $clientSecret = '2959c1ff340c4948b073360d9a66ef65';
+            $clientID = $_ENV['CLIENT_ID'];
+            $clientSecret = $_ENV['CLIENT_SECRET'];
 
             // The Spotify accounts service URL
             $accountsServiceURL = 'https://accounts.spotify.com';
@@ -99,7 +108,7 @@
 
         </div>
 
-        <script src="script.js"></script>
+        <script src="../js/script.js"></script>
 </body>
 
 </html>
