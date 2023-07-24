@@ -1,21 +1,98 @@
+html {
+    height: 100%;
+}
+
 body {
+    height: 100%;
     font-family: 'Roboto', sans-serif;
     font-size: 16px;
     line-height: 1.5;
     margin: 0;
-    padding: 1%;
-    background: #afd8f3;
+    padding: 0;
+    background: radial-gradient(circle at center, #1DB954, #121212 90%);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+
+
+
+
+.header-bar {
+    position: relative;
+    padding: 10px 20px;
+}
+
+.auth-link {
+    position: static;
+    transform: none;
+    margin-top: 10px;
+}
+
+.auth-link a {
+    display: inline-block;
+    padding: 20px 20px;
+    background-color: #ffffff;
+    border: none;
+    color: #222;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.auth-link a i {
+    color: #1DB954;
+
+    margin-right: 10px;
+}
+
+
+.auth-link a:hover {
+    background-color: #ddd;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 h1 {
     text-align: center;
     margin: 1vh;
-    color: #4c87af;
+    color: white;
     font-size: calc(2vw + 2vh + 1vmin);
     line-height: 1.2em;
     transition: font-size 0.5s ease;
 }
 
+/* Small screens */
+@media (max-width: 750px) {
+    .auth-link {
+        position: static;
+        transform: none;
+        margin-top: 10px;
+    }
+
+    .auth-link a {
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: calc(3vw + 3vh + 1vmin);
+    }
+}
+
+/* Medium screens */
+@media (min-width: 751px) and (max-width: 900px) {
+    .auth-link a {
+        padding: 7px 14px;
+        font-size: 15px;
+    }
+
+    h1 {
+        font-size: calc(2.5vw + 2.5vh + 1vmin);
+    }
+}
 
 button {
     background-color: #4c87af;
@@ -102,10 +179,10 @@ pre {
 }
 
 #songCounterContainer {
-    text-align: left;
+    text-align: right;
     font-size: 18px;
     font-weight: bold;
-    color: #4c87af;
+    color: white;
 }
 
 .spacer {
@@ -130,24 +207,6 @@ pre {
     font-size: 5rem;
     font-weight: bold;
     text-align: center;
-}
-
-body {
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    margin: 0;
-    padding: 1%;
-    background: #afd8f3;
-}
-
-h1 {
-    text-align: center;
-    margin: 1vh;
-    color: #4c87af;
-    font-size: calc(2vw + 2vh + 1vmin);
-    line-height: 1.2em;
-    transition: font-size 0.5s ease;
 }
 
 button {
@@ -199,33 +258,13 @@ button:hover {
     }
 }
 
-.auth-link {
-    text-align: center;
-}
-
-.auth-link a {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #4c87af;
-    border: none;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
-
-.auth-link a:hover {
-    background-color: #7cc6f8;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-3px);
-}
-
 .playlist-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
+
+    /* give padding to the top */
+    margin-top: 10vh;
 }
 
 .playlist {
@@ -235,45 +274,87 @@ button:hover {
     /* Center the text */
     word-wrap: break-word;
     /* Break words to a new line if they are too long */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .playlist h2 {
-    font-size: 16px;
-    /* Adjust as needed */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 200px;
+    /* make the text 1 rem */
+    font-size: 1rem;
+
+    color: white;
 }
 
 .playlist-image {
     cursor: pointer;
     max-width: 200px;
     max-height: 200px;
-
     /* round them corners */
     border-radius: 1rem;
-
     /* add a glow effect */
-    box-shadow: 0 0 10px #00ff00;
+    box-shadow: 0 0 10px #ffffff;
     /* adjust color as needed */
 }
-
 
 .playlist-image:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-3px);
-
     /* highlight the image */
     filter: brightness(1.2);
-
     /* give the image a little bit of depth */
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
-
     /* give a border to the image */
     border: 1px solid #4c87af;
-
     /* give the image a border radius */
     border-radius: 5px;
 }
 
+.loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #1DB954;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite;
+    /* Safari */
+    animation: spin 2s linear infinite;
+
+    /* give it some space on the top */
+    margin-top: 20px;
+
+    /* give it a little bit of depth */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    /* hide it by default */
+    display: none;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

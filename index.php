@@ -4,40 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shuffled Spotify Links</title>
+    <title>Spotify Shuffler</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
 </head>
 
 <body>
     <div class="container">
-        <div class="spacer">
-            <h1>Shuffled Spotify Links</h1>
-        </div>
-
-        <div class="spacer">
-            <form method="post">
-                <button type="button" name="shuffle" id="shuffleBtn">Shuffle Links</button>
-                <button type="button" id="selectAllBtn" onclick="selectText()">Select All</button>
-                <button type="button" id="copyBtn">Copy</button>
-            </form>
-        </div>
-
-        <div class="spacer">
-            <div id="popup">
-                <span>Copied Shuffled Links!</span>
-            </div>
-        </div>
-
-        <div class="spacer">
-            <div id="dropzone">Drop your text file here</div>
-            <div id="songCounterContainer">
-                <span id="songCounter">0</span> songs
-            </div>
-        </div>
-
         <div class="spacer">
             <?php
             ini_set('display_errors', 1);
@@ -65,12 +42,19 @@
             // The URL the user will be redirected to in order to authorize your application
             $authURL = $accountsServiceURL . '/authorize?response_type=code&client_id=' . $clientID . '&scope=' . urlencode($scopes) . '&redirect_uri=' . urlencode($redirectURL) . '&state=' . $state . '&show_dialog=true';
 
-            echo '<div class="auth-link"><a href="' . $authURL . '">Log in with Spotify</a></div>';
-
             // Echo a logout link if the user is logged in
             if (isset($_SESSION['access_token'])) {
-                echo "<br>";
-                echo '<div class="auth-link"><a href="logout.php">Log out</a></div>';
+                echo '<div class="header-bar">';
+                echo '<div class="auth-link"><a href="logout.php"><i class="fab fa-spotify"></i>Log Out</a></div>';
+                echo '<h1>Spotify Playlist Shuffler</h1>';
+                echo '</div>';
+            } else {
+
+                echo '<div class="auth-link"><a href="' . $authURL . '"><i class="fab fa-spotify"></i>Log In</a></div>';
+
+                echo '  <div class="spacer">
+            <h1>Spotify Playlist Shuffler</h1>
+            </div>';
             }
 
             if (isset($_SESSION['access_token'])) {
@@ -99,16 +83,17 @@
 
                     echo '<div class="playlist">';
                     echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
-                    echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\')" class="playlist-image">';
+                    echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
+                    echo '<div class="loader" id="loader-' . $playlist['id'] . '"></div>';
                     echo '</div>';
                 }
                 echo '</div>';
             }
             ?>
-        </div>
-    </div>
 
-    <script src="script.js"></script>
+        </div>
+
+        <script src="script.js"></script>
 </body>
 
 </html>
