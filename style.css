@@ -28,8 +28,13 @@ body {
 }
 
 .auth-link a {
-    display: inline-block;
-    padding: 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    /* adjust as needed */
+    height: 50px;
+    /* adjust as needed */
     background-color: #ffffff;
     border: none;
     color: #222;
@@ -40,6 +45,7 @@ body {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
+
 
 .auth-link a i {
     color: #1DB954;
@@ -71,7 +77,10 @@ h1 {
     }
 
     .auth-link a {
-        padding: 5px 10px;
+        width: 130px;
+        /* adjust as needed */
+        height: 40px;
+        /* adjust as needed */
         font-size: 14px;
     }
 
@@ -83,7 +92,10 @@ h1 {
 /* Medium screens */
 @media (min-width: 751px) and (max-width: 900px) {
     .auth-link a {
-        padding: 7px 14px;
+        width: 140px;
+        /* adjust as needed */
+        height: 45px;
+        /* adjust as needed */
         font-size: 15px;
     }
 
@@ -91,6 +103,7 @@ h1 {
         font-size: calc(2.5vw + 2.5vh + 1vmin);
     }
 }
+
 
 button {
     background-color: #4c87af;

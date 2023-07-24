@@ -42,20 +42,23 @@
             // The URL the user will be redirected to in order to authorize your application
             $authURL = $accountsServiceURL . '/authorize?response_type=code&client_id=' . $clientID . '&scope=' . urlencode($scopes) . '&redirect_uri=' . urlencode($redirectURL) . '&state=' . $state . '&show_dialog=true';
 
-            // Echo a logout link if the user is logged in
+
+            // Output the header
             if (isset($_SESSION['access_token'])) {
                 echo '<div class="header-bar">';
                 echo '<div class="auth-link"><a href="logout.php"><i class="fab fa-spotify"></i>Log Out</a></div>';
+                echo '<div class="spacer"></div>';
                 echo '<h1>Spotify Playlist Shuffler</h1>';
                 echo '</div>';
             } else {
-
+                echo '<div class="header-bar">';
                 echo '<div class="auth-link"><a href="' . $authURL . '"><i class="fab fa-spotify"></i>Log In</a></div>';
-
-                echo '  <div class="spacer">
-            <h1>Spotify Playlist Shuffler</h1>
-            </div>';
+                echo '<div class="spacer"></div>';
+                echo '<h1>Spotify Playlist Shuffler</h1>';
+                echo '</div>';
+                echo '<div class="spacer"></div>';
             }
+
 
             if (isset($_SESSION['access_token'])) {
                 $accessToken = $_SESSION['access_token'];
@@ -67,6 +70,8 @@
                         'method' => 'GET'
                     ]
                 ];
+
+                // Fetch the user's playlists
                 $playlistContext = stream_context_create($playlistOptions);
                 $playlistResult = file_get_contents('https://api.spotify.com/v1/me/playlists', false, $playlistContext);
 
@@ -81,6 +86,7 @@
                     // Get the URL of the first image (largest size)
                     $imageUrl = $playlist['images'][0]['url'];
 
+                    // Output the playlist
                     echo '<div class="playlist">';
                     echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
                     echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
