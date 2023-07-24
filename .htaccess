@@ -1,5 +1,0 @@
-RewriteEngine on
-RewriteRule ^$ php/ [L]
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule . php/$0 [L]

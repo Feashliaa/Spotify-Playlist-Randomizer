@@ -5,20 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Shuffler</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-</head>
 </head>
 
 <body>
     <div class="container">
         <div class="spacer">
             <?php
-
-            require __DIR__ . '/../../vendor/autoload.php';
+            require __DIR__ . '/../vendor/autoload.php';
 
             // use environment variables
             $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -38,7 +36,7 @@
             $accountsServiceURL = 'https://accounts.spotify.com';
 
             // The URL of your application's authorization callback
-            $redirectURL = 'http://localhost/Playlist_Randomizer/Spotify-Playlist-Randomizer/callback.php';
+            $redirectURL = $_ENV['APP_URL'] . 'callback.php';
 
             // The scopes your application needs access to
             $scopes = 'playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
@@ -106,7 +104,7 @@
 
         </div>
 
-        <script src="../js/script.js"></script>
+        <script src="script.js"></script>
 </body>
 
 </html>

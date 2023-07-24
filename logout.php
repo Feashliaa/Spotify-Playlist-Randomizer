@@ -7,5 +7,5 @@ if (isset($_SESSION['access_token'])) {
 }
 
 // Redirect to the index page
-header('Location: index.php');
+header('Location: ' . $_ENV['APP_URL'] . 'index.php');
 exit;

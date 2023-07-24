@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 // use environment variables
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -18,10 +18,11 @@ if (isset($_GET['code'])) {
     $data = [
         'grant_type' => 'authorization_code',
         'code' => $code,
-        'redirect_uri' => 'http://localhost/Playlist_Randomizer/Spotify-Playlist-Randomizer/callback.php',
+        'redirect_uri' => $_ENV['APP_URL'] . 'callback.php',
         'client_id' => $_ENV['CLIENT_ID'],
         'client_secret' => $_ENV['CLIENT_SECRET']
     ];
+
 
     $options = [
         'http' => [
@@ -44,6 +45,6 @@ if (isset($_GET['code'])) {
     $_SESSION['access_token'] = $accessToken;
 
     // redirect to index.php
-    header('Location: http://localhost/Playlist_Randomizer/Spotify-Playlist-Randomizer/index.php');
+    header('Location: ' . $_ENV['APP_URL'] . 'index.php');
     exit;
 }
