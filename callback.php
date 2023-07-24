@@ -1,6 +1,10 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+if (isset($_ENV['HEROKU'])) {
+    require __DIR__ . '/vendor/autoload.php';
+} else {
+    require __DIR__ . '/../vendor/autoload.php';
+}
 
 // use environment variables
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
