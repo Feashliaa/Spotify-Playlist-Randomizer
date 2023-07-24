@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    height: 100%;
+    min-height: 100vh;
     font-family: 'Roboto', sans-serif;
     font-size: 16px;
     line-height: 1.5;
@@ -11,11 +11,9 @@ body {
     padding: 0;
     background: radial-gradient(circle at center, #1DB954, #121212 90%);
     background-repeat: no-repeat;
+    background-attachment: fixed;
     background-size: cover;
 }
-
-
-
 
 
 .header-bar {
