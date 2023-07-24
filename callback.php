@@ -28,7 +28,8 @@ if (isset($_GET['code'])) {
     $context  = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
     if ($result === FALSE) {
-        /* Handle error */
+        // Handle error
+        die('Failed to fetch access token');
     }
 
     $response = json_decode($result, true);
