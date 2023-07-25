@@ -1,5 +1,11 @@
 html {
     height: 100%;
+
+    /* make all text non-selectable */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 body {
@@ -21,11 +27,39 @@ body {
     padding: 10px 20px;
 }
 
+.username {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color: white;
+    font-size: 1.5em;
+
+    /* move it down to be in-line with the header bar */
+    transform: translateY(25%);
+
+}
+
+@media (max-width: 350px) {
+
+    /* hide the username on small screens */
+    .username {
+        display: none;
+    }
+
+    /* center the auth link on small screens */
+    .auth-link {
+        display: flex;
+        justify-content: center;
+        margin: 0 auto;
+    }
+}
+
 .auth-link {
     position: static;
     transform: none;
     margin-top: 10px;
 }
+
 
 .auth-link a {
     display: flex;
@@ -62,11 +96,14 @@ body {
 h1 {
     text-align: center;
     margin: 1vh;
-    color: white;
+    color: #fff;
     font-size: calc(2vw + 2vh + 1vmin);
     line-height: 1.2em;
-    transition: font-size 0.5s ease;
+    transition: font-size 0.5s ease, color 0.5s ease;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    font-family: 'Montserrat', sans-serif;
 }
+
 
 /* Small screens */
 @media (max-width: 750px) {
@@ -273,7 +310,6 @@ button:hover {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-
     /* give padding to the top */
     margin-top: 10vh;
 }
@@ -288,6 +324,8 @@ button:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
+    /* make this a positioned ancestor for song-counter */
 }
 
 .playlist h2 {
@@ -297,7 +335,6 @@ button:hover {
     max-width: 200px;
     /* make the text 1 rem */
     font-size: 1rem;
-
     color: white;
 }
 
@@ -305,27 +342,32 @@ button:hover {
     cursor: pointer;
     max-width: 200px;
     max-height: 200px;
-    /* round them corners */
     border-radius: 1rem;
-    /* add a glow effect */
     box-shadow: 0 0 10px #ffffff;
-    /* adjust color as needed */
+    transition: all 0.2s ease-in-out;
 }
 
 .playlist-image:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-3px);
-    /* highlight the image */
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
     filter: brightness(1.2);
-    /* give the image a little bit of depth */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-    /* give a border to the image */
-    border: 1px solid #4c87af;
-    /* give the image a border radius */
-    border-radius: 5px;
 }
+
+.song-counter {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-top: 20px;
+    border-bottom-right-radius: 1rem;
+    transition: all 0.2s ease-in-out;
+
+    /* Make the element non-interactive */
+    pointer-events: none;
+}
+
 
 .loader {
     border: 16px solid #f3f3f3;
@@ -347,6 +389,11 @@ button:hover {
 
     /* hide it by default */
     display: none;
+
+    position: absolute;
+
+    /* move it down 50% */
+    top: 100%;
 }
 
 /* Safari */

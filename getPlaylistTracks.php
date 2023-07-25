@@ -10,11 +10,9 @@ if (isset($_SESSION['access_token'])) {
     $nextTracksUrl = "https://api.spotify.com/v1/playlists/$playlistId/tracks";
     $playlistApiUrl = "https://api.spotify.com/v1/playlists/$playlistId/tracks";
 
-    $allTracks = []; // Array to store all the tracks
+    $allTracks = [];
 
-    // Fetch all the tracks in the playlist
     do {
-        // Fetch the tracks
         $tracksOptions = [
             'http' => [
                 'header' => "Authorization: Bearer $accessToken\r\n",
@@ -29,13 +27,8 @@ if (isset($_SESSION['access_token'])) {
             die('Failed to fetch tracks');
         }
 
-        // Decode the response
         $tracks = json_decode($tracksResult, true);
-
-        // Add the tracks to the array
         $allTracks = array_merge($allTracks, $tracks['items']);
-
-        // Get the URL of the next page of tracks
         $nextTracksUrl = $tracks['next'];
     } while ($nextTracksUrl !== null);
 
@@ -46,16 +39,11 @@ if (isset($_SESSION['access_token'])) {
             'method' => 'GET'
         ]
     ];
-
     $playlistContext = stream_context_create($playlistOptions);
-
     $playlistResult = file_get_contents("https://api.spotify.com/v1/playlists/$playlistId", false, $playlistContext);
-
     if ($playlistResult === FALSE) {
         die('Failed to fetch playlist');
     }
-
-    // Decode the response
     $playlistData = json_decode($playlistResult, true);
 
     // Create a backup playlist
@@ -72,16 +60,12 @@ if (isset($_SESSION['access_token'])) {
     ];
 
     $backupPlaylistContext = stream_context_create($backupPlaylistOptions);
-
     $backupPlaylistResult = file_get_contents('https://api.spotify.com/v1/me/playlists', false, $backupPlaylistContext);
-
     if ($backupPlaylistResult === FALSE) {
         die('Failed to create backup playlist');
     }
 
-    // Decode the response
     $backupPlaylist = json_decode($backupPlaylistResult, true);
-
     $backupPlaylistId = $backupPlaylist['id'];
 
     // Add all tracks to the backup playlist
@@ -93,8 +77,6 @@ if (isset($_SESSION['access_token'])) {
     // Get the track URIs in chunks of 100
     $uriChunks = array_chunk($uris, 100);
 
-    // Add the tracks to the backup playlist in chunks of 100
-    // This is the maximum number of tracks that can be added in a single request to the API
     foreach ($uriChunks as $chunk) {
         // Prepare the data for the API request
         $data = [
@@ -161,7 +143,7 @@ if (isset($_SESSION['access_token'])) {
         }
     }
 
-    // Clear all tracks from the backup playlist using cURL 
+    // Clear all tracks from the backup playlist using cURL
     $backupClearUrl = "https://api.spotify.com/v1/playlists/$backupPlaylistId/tracks";
     $backupClearOptions = [
         CURLOPT_URL => $backupClearUrl,
@@ -172,19 +154,10 @@ if (isset($_SESSION['access_token'])) {
         CURLOPT_POSTFIELDS => json_encode(['uris' => []]) // Empty array to remove all tracks
     ];
 
-    // Make the API request to clear the backup playlist
     $backupClearCurl = curl_init();
-
-    // Set the cURL options
     curl_setopt_array($backupClearCurl, $backupClearOptions);
-
-    // Execute the cURL request
     $backupClearResult = curl_exec($backupClearCurl);
-
-    // Get the HTTP status code
     $backupClearHttpCode = curl_getinfo($backupClearCurl, CURLINFO_HTTP_CODE);
-
-    // Close the cURL request
     curl_close($backupClearCurl);
 
     // Check the HTTP status code to determine if clearing the playlist was successful
@@ -194,7 +167,7 @@ if (isset($_SESSION['access_token'])) {
         echo "Failed to clear backup playlist. HTTP status code: $backupClearHttpCode";
     }
 
-    // Unfollow the backup playlist 
+    // Unfollow the backup playlist
     $unfollowUrl = "https://api.spotify.com/v1/playlists/$backupPlaylistId/followers";
     $unfollowOptions = [
         CURLOPT_URL => $unfollowUrl,
@@ -204,19 +177,10 @@ if (isset($_SESSION['access_token'])) {
         CURLOPT_HEADER => false
     ];
 
-    // Make the API request to unfollow the backup playlist
     $unfollowCurl = curl_init();
-
-    // Set the cURL options
     curl_setopt_array($unfollowCurl, $unfollowOptions);
-
-    // Execute the cURL request
     $unfollowResult = curl_exec($unfollowCurl);
-
-    // Get the HTTP status code
     $unfollowHttpCode = curl_getinfo($unfollowCurl, CURLINFO_HTTP_CODE);
-
-    // Close the cURL request
     curl_close($unfollowCurl);
 
     // Check the HTTP status code to determine if unfollowing the playlist was successful

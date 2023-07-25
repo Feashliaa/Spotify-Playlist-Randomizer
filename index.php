@@ -37,25 +37,60 @@
             // The Spotify accounts service URL
             $accountsServiceURL = 'https://accounts.spotify.com';
 
-            // The URL of your application's authorization callback
+            // The URL of application's authorization callback
             $redirectURL = $_ENV['APP_URL'] . 'callback.php';
 
-            // The scopes your application needs access to
-            $scopes = 'playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
+            // The scopes application needs access to
+            $scopes = 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
 
             // Generate a random string for the state parameter
             $state = bin2hex(random_bytes(16));
 
-            // The URL the user will be redirected to in order to authorize your application
+            // The URL the user will be redirected to in order to authorize application
             $authURL = $accountsServiceURL . '/authorize?response_type=code&client_id=' . $clientID . '&scope=' . urlencode($scopes) . '&redirect_uri=' . urlencode($redirectURL) . '&state=' . $state . '&show_dialog=true';
 
             // Output the header
             if (isset($_SESSION['access_token'])) {
+
+                // get the username
+                $accessToken = $_SESSION['access_token'];
+
+                // Initialize cURL
+                $ch = curl_init();
+
+                // Set the cURL options
+                curl_setopt($ch, CURLOPT_URL, "https://api.spotify.com/v1/me");
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+
+                // Set the headers including the access token
+                $headers = array(
+                    'Authorization: Bearer ' . $accessToken
+                );
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+                // Execute the cURL and get the response
+                $result = curl_exec($ch);
+
+                // Close cURL
+                curl_close($ch);
+
+                // Decode the JSON response
+                $user = json_decode($result);
+
+
                 echo '<div class="header-bar">';
                 echo '<div class="auth-link"><a href="logout.php"><i class="fab fa-spotify"></i>Log Out</a></div>';
                 echo '<div class="spacer"></div>';
                 echo '<h1>Spotify Playlist Shuffler</h1>';
-                echo '</div>';
+                // Display username if exists
+                if (isset($user->display_name)) {
+                    echo '<div class="username">User: ' . htmlspecialchars($user->display_name) . '</div>';
+                } else {
+                    echo '<div class="username">User: </div>'; // Fallback to a default message
+                }
+                echo '</div>'; // This is the closing tag for your existing "header-bar" div
+
             } else {
                 echo '<div class="header-bar">';
                 echo '<div class="auth-link"><a href="' . $authURL . '"><i class="fab fa-spotify"></i>Log In</a></div>';
@@ -104,13 +139,25 @@
 
                     echo '<div class="playlist-container">';
                     foreach ($playlists['items'] as $playlist) {
+
+                        // If there is a playlist with no tracks, skip it
+                        if ($playlist['tracks']['total'] === 0) {
+                            continue;
+                        }
+
                         // Get the URL of the first image (largest size)
-                        $imageUrl = $playlist['images'][0]['url'];
+                        // if there is no image, use a default image
+                        if (count($playlist['images']) === 0) {
+                            $imageUrl = 'https://via.placeholder.com/200';
+                        } else{
+                            $imageUrl = $playlist['images'][0]['url'];
+                        }
 
                         // Output the playlist
                         echo '<div class="playlist">';
                         echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
                         echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
+                        echo '<div class="song-counter">' . $playlist['tracks']['total'] . ' songs</div>';
                         echo '<div class="loader" id="loader-' . $playlist['id'] . '"></div>';
                         echo '</div>';
                     }
