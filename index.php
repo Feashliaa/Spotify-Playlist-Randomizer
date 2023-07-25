@@ -16,20 +16,21 @@
     <div class="container">
         <div class="spacer">
             <?php
-            
+
             require __DIR__ . '/../vendor/autoload.php';
 
             // use environment variables
             $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
             $dotenv->load();
 
+            // Display errors
             ini_set('display_errors', 1);
             ini_set('display_startup_errors', 1);
             error_reporting(E_ALL);
 
             session_start();
 
-            // Your Spotify application credentials
+            // Spotify application credentials
             $clientID = $_ENV['CLIENT_ID'];
             $clientSecret = $_ENV['CLIENT_SECRET'];
 
@@ -48,7 +49,6 @@
             // The URL the user will be redirected to in order to authorize your application
             $authURL = $accountsServiceURL . '/authorize?response_type=code&client_id=' . $clientID . '&scope=' . urlencode($scopes) . '&redirect_uri=' . urlencode($redirectURL) . '&state=' . $state . '&show_dialog=true';
 
-
             // Output the header
             if (isset($_SESSION['access_token'])) {
                 echo '<div class="header-bar">';
@@ -65,7 +65,6 @@
                 echo '<div class="spacer"></div>';
             }
 
-
             if (isset($_SESSION['access_token'])) {
                 $accessToken = $_SESSION['access_token'];
 
@@ -77,29 +76,46 @@
                     ]
                 ];
 
+
                 // Fetch the user's playlists
                 $playlistContext = stream_context_create($playlistOptions);
                 $playlistResult = file_get_contents('https://api.spotify.com/v1/me/playlists', false, $playlistContext);
 
                 if ($playlistResult === FALSE) {
-                    die('Failed to fetch playlists');
-                }
+                    // Output a message to the user
+                    echo '<div class="error-message" id="error-message">Failed to fetch playlists</div>';
+                    // JavaScript for fade-in and fade-out
+                    echo '<script>
 
-                $playlists = json_decode($playlistResult, true);
+                            var errorMessage = document.querySelector("#error-message");
 
-                echo '<div class="playlist-container">';
-                foreach ($playlists['items'] as $playlist) {
-                    // Get the URL of the first image (largest size)
-                    $imageUrl = $playlist['images'][0]['url'];
+                            // Fade in immediately
+                            errorMessage.style.opacity = "1"; 
 
-                    // Output the playlist
-                    echo '<div class="playlist">';
-                    echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
-                    echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
-                    echo '<div class="loader" id="loader-' . $playlist['id'] . '"></div>';
+                            // Fade out after 2.5 seconds
+
+                            setTimeout(function() { 
+                                errorMessage.style.opacity = "0"; 
+                            }, 2500);
+                            
+                          </script>';
+                } else {
+                    $playlists = json_decode($playlistResult, true);
+
+                    echo '<div class="playlist-container">';
+                    foreach ($playlists['items'] as $playlist) {
+                        // Get the URL of the first image (largest size)
+                        $imageUrl = $playlist['images'][0]['url'];
+
+                        // Output the playlist
+                        echo '<div class="playlist">';
+                        echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
+                        echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
+                        echo '<div class="loader" id="loader-' . $playlist['id'] . '"></div>';
+                        echo '</div>';
+                    }
                     echo '</div>';
                 }
-                echo '</div>';
             }
             ?>
 

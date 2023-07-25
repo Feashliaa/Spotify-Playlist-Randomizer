@@ -369,3 +369,24 @@ button:hover {
         transform: rotate(360deg);
     }
 }
+
+.error-message {
+    /* Styles */
+    background-color: #f44336;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    /* Center the text */
+    font-weight: bold;
+    /* Make the text bold */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    /* Initial opacity */
+    opacity: 0;
+
+    /* Define transition property for opacity */
+    transition: opacity 2s ease-in-out;
+}
