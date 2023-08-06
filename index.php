@@ -149,7 +149,7 @@
                         // if there is no image, use a default image
                         if (count($playlist['images']) === 0) {
                             $imageUrl = 'https://via.placeholder.com/200';
-                        } else{
+                        } else {
                             $imageUrl = $playlist['images'][0]['url'];
                         }
 
@@ -168,6 +168,16 @@
 
         </div>
 
+        <script src="script.js"></script>
+
+        <form action="https://www.paypal.com/donate" method="post" target="_top" class="paypal-donate-form">
+            <input type="hidden" name="business" value="L7S2SKNB2TEN4" />
+            <input type="hidden" name="no_recurring" value="0" />
+            <input type="hidden" name="item_name" value="Help Cover Web Hosting Costs" />
+            <input type="hidden" name="currency_code" value="USD" />
+            <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+            <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+        </form>
         <script src="script.js"></script>
 </body>
 

@@ -310,9 +310,11 @@ button:hover {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-    /* give padding to the top */
     margin-top: 10vh;
+    margin-bottom: 60px;
+    /* Added this line */
 }
+
 
 .playlist {
     width: 200px;
@@ -368,6 +370,12 @@ button:hover {
     pointer-events: none;
 }
 
+.paypal-donate-form {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+}
 
 .loader {
     border: 16px solid #f3f3f3;
