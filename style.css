@@ -1,7 +1,6 @@
 html {
     height: 100%;
 
-    /* make all text non-selectable */
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -34,19 +33,16 @@ body {
     color: white;
     font-size: 1.5em;
 
-    /* move it down to be in-line with the header bar */
     transform: translateY(25%);
 
 }
 
 @media (max-width: 350px) {
 
-    /* hide the username on small screens */
     .username {
         display: none;
     }
 
-    /* center the auth link on small screens */
     .auth-link {
         display: flex;
         justify-content: center;
@@ -66,9 +62,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 150px;
-    /* adjust as needed */
     height: 50px;
-    /* adjust as needed */
     background-color: #ffffff;
     border: none;
     color: #222;
@@ -115,9 +109,7 @@ h1 {
 
     .auth-link a {
         width: 130px;
-        /* adjust as needed */
         height: 40px;
-        /* adjust as needed */
         font-size: 14px;
     }
 
@@ -130,9 +122,7 @@ h1 {
 @media (min-width: 751px) and (max-width: 900px) {
     .auth-link a {
         width: 140px;
-        /* adjust as needed */
         height: 45px;
-        /* adjust as needed */
         font-size: 15px;
     }
 
@@ -159,12 +149,10 @@ button {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s;
 
-    /* give the button a little bit of depth */
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
 
-    /* give a border to the button */
     border: 1px solid #4c87af;
 
     min-width: 80px;
@@ -274,12 +262,10 @@ button {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s;
 
-    /* give the button a little bit of depth */
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
 
-    /* give a border to the button */
     border: 1px solid #4c87af;
 
     min-width: 80px;
@@ -312,7 +298,6 @@ button:hover {
     justify-content: space-around;
     margin-top: 10vh;
     margin-bottom: 60px;
-    /* Added this line */
 }
 
 
@@ -389,7 +374,6 @@ button:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 200px;
-    /* make the text 1 rem */
     font-size: 1rem;
     color: white;
 }
@@ -408,7 +392,6 @@ button:hover {
     border-bottom-right-radius: 1rem;
     transition: all 0.2s ease-in-out;
 
-    /* Make the element non-interactive */
     pointer-events: none;
 }
 
@@ -422,22 +405,17 @@ button:hover {
 
 
 .error-message {
-    /* Styles */
     background-color: #f44336;
     color: #fff;
     padding: 10px;
     border-radius: 5px;
     text-align: center;
-    /* Center the text */
     font-weight: bold;
-    /* Make the text bold */
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
 
-    /* Initial opacity */
     opacity: 0;
 
-    /* Define transition property for opacity */
     transition: opacity 2s ease-in-out;
 }

@@ -89,7 +89,7 @@
                 } else {
                     echo '<div class="username">User: </div>'; // Fallback to a default message
                 }
-                echo '</div>'; // This is the closing tag for your existing "header-bar" div
+                echo '</div>';
 
             } else {
                 echo '<div class="header-bar">';
@@ -117,9 +117,8 @@
                 $playlistResult = file_get_contents('https://api.spotify.com/v1/me/playlists', false, $playlistContext);
 
                 if ($playlistResult === FALSE) {
-                    // Output a message to the user
                     echo '<div class="error-message" id="error-message">Failed to fetch playlists</div>';
-                    // JavaScript for fade-in and fade-out
+
                     echo '<script>
 
                             var errorMessage = document.querySelector("#error-message");
@@ -153,7 +152,6 @@
                             $imageUrl = $playlist['images'][0]['url'];
                         }
 
-                        // Output the playlist
                         echo '<div class="playlist">';
                         echo '<h2>' . htmlspecialchars($playlist['name']) . '</h2>';
                         echo '<img src="' . $imageUrl . '" onclick="shufflePlaylist(\'' . $playlist['id'] . '\', this)" class="playlist-image">';
