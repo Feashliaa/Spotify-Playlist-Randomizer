@@ -11,6 +11,7 @@ if (isset($_SESSION['access_token'])) {
     $playlistApiUrl = "https://api.spotify.com/v1/playlists/$playlistId/tracks";
 
     $allTracks = [];
+    $localTracks = [];
 
     do {
         $tracksOptions = [
@@ -28,7 +29,23 @@ if (isset($_SESSION['access_token'])) {
         }
 
         $tracks = json_decode($tracksResult, true);
-        $allTracks = array_merge($allTracks, $tracks['items']);
+
+        foreach ($tracks['items'] as $item) {
+            if (isset($item['track']['external_urls']['spotify'])) {
+                $allTracks[] = $item;
+            } else {
+                $artists = [];
+                foreach ($item['track']['artists'] as $artist) {
+                    $artists[] = $artist['name'];
+                }
+                $artistNames = implode(', ', $artists);
+
+                echo 'Skipped track: ' . $item['track']['name'] . ' by ' . $artistNames . '<br>' . PHP_EOL;
+                $localTracks[] = $item;
+            }
+        }
+
+
         $nextTracksUrl = $tracks['next'];
     } while ($nextTracksUrl !== null);
 
@@ -45,6 +62,7 @@ if (isset($_SESSION['access_token'])) {
         die('Failed to fetch playlist');
     }
     $playlistData = json_decode($playlistResult, true);
+
 
     // Create a backup playlist
     $backupPlaylistOptions = [
@@ -94,7 +112,7 @@ if (isset($_SESSION['access_token'])) {
         $context = stream_context_create($options);
         $result = file_get_contents($backupPlaylistApiUrl, false, $context);
         if ($result === FALSE) {
-            die('Failed to add tracks to backup playlist');
+            die('Failed to add tracks to backup playlist <br>');
         }
     }
 
@@ -116,7 +134,7 @@ if (isset($_SESSION['access_token'])) {
     $context = stream_context_create($options);
     $result = file_get_contents($playlistApiUrl, false, $context);
     if ($result === FALSE) {
-        die('Failed to remove tracks from playlist');
+        die('Failed to remove tracks from playlist <br>');
     }
 
     // Get the shuffled track URIs in chunks of 100
@@ -139,7 +157,7 @@ if (isset($_SESSION['access_token'])) {
         $context = stream_context_create($options);
         $result = file_get_contents($playlistApiUrl, false, $context);
         if ($result === FALSE) {
-            die('Failed to add tracks to playlist');
+            die('Failed to add tracks to playlist <br>');
         }
     }
 
@@ -162,9 +180,9 @@ if (isset($_SESSION['access_token'])) {
 
     // Check the HTTP status code to determine if clearing the playlist was successful
     if ($backupClearHttpCode === 200 || $backupClearHttpCode === 201) {
-        echo "Successfully shuffled tracks and cleared backup playlist.";
+        echo "Successfully shuffled tracks and cleared backup playlist. <br>";
     } else {
-        echo "Failed to clear backup playlist. HTTP status code: $backupClearHttpCode";
+        echo "Failed to clear backup playlist. HTTP status code: $backupClearHttpCode <br>";
     }
 
     // Unfollow the backup playlist
@@ -185,8 +203,8 @@ if (isset($_SESSION['access_token'])) {
 
     // Check the HTTP status code to determine if unfollowing the playlist was successful
     if ($unfollowHttpCode === 200 || $unfollowHttpCode === 201) {
-        echo "Successfully unfollowed backup playlist.";
+        echo "Successfully unfollowed backup playlist. <br>";
     } else {
-        echo "Failed to unfollow backup playlist. HTTP status code: $unfollowHttpCode";
+        echo "Failed to unfollow backup playlist. HTTP status code: $unfollowHttpCode <br>";
     }
 }
