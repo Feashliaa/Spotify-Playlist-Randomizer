@@ -1,1 +1,2 @@
 .env
+cypress\e2e\playlist_test.cy.js
