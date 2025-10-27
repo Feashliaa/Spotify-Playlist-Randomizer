@@ -35,17 +35,7 @@ function shufflePlaylist(playlistId, clickedImage) {
                     image.style.pointerEvents = 'auto';
                 }
             });
-
-            /* data will look something like this
             
-            Skipped track: Hollow by Tesseract<br>
-            
-            Skipped track: Rebirth by Tesseract<br>
-            
-            Successfully shuffled tracks and cleared backup playlist. <br>Successfully unfollowed backup playlist. <br>
-
-            we need to extract the skipped tracks, if any, and show them in an alert
-            */
             const cleanedData = data.replace(/<br>/g, ''); // Remove <br> tags from the data
             const skippedTracks = cleanedData.match(/Skipped track: .+ by .+/g); // regex to match skipped tracks
             console.log('Skipped Tracks:', skippedTracks);
