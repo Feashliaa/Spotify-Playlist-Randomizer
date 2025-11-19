@@ -1,57 +1,87 @@
+// Global guard, safe even if this file is accidentally included twice
+if (typeof window.isShuffling === 'undefined') {
+    window.isShuffling = false;
+}
+
 function shufflePlaylist(playlistId, clickedImage) {
-    // Disable other shuffle buttons while one is loading
-    const allPlaylistImages = document.querySelectorAll('.playlist-image');
-    allPlaylistImages.forEach(image => {
-        if (image !== clickedImage) {
-            image.style.pointerEvents = 'none';
-        }
+    console.log('shufflePlaylist called for', playlistId);
+
+    if (window.isShuffling) {
+        console.log('Shuffle blocked: already shuffling.');
+        return;
+    }
+    window.isShuffling = true;
+    console.log('Shuffle started.');
+
+    const cards = document.querySelectorAll('.playlist');
+    const loader = document.getElementById('loader-' + playlistId);
+
+    console.log('Disabling UI elements during shuffle...');
+    for (const card of cards) {
+        console.log('Disabling card:', card);
+    }
+
+    // Disable ALL playlist cards (no clicks anywhere inside them)
+    cards.forEach(card => {
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.5';
     });
 
-    // Show the loader for this playlist
-    document.getElementById('loader-' + playlistId).style.display = 'block';
+    if (loader) {
+        loader.style.display = 'block';
+    }
 
-    // Make an API call to shuffle the playlist
-    fetch(`getPlaylistTracks.php?playlist_id=${playlistId}`)
+    fetch(`getPlaylistTracks.php?playlist_id=${encodeURIComponent(playlistId)}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Request failed: ${response.status}`);
             }
-            // Hide the loader for this playlist
-            document.getElementById('loader-' + playlistId).style.display = 'none';
-
-            // Return the response as text
             return response.text();
         })
-        .then(data => {
+        .then(rawText => {
+            if (loader) {
+                loader.style.display = 'none';
+            }
 
-            console.log(data);
+            const text = rawText.replace(/<br\s*\/?>/gi, '').trim();
+            const skipped = text.match(/Skipped track:\s.*? by .*?(?=$|\n)/g);
 
-            // Hide the loader for this playlist
-            document.getElementById('loader-' + playlistId).style.display = 'none';
-
-            // Enable other shuffle buttons after loading is complete
-            allPlaylistImages.forEach(image => {
-                if (image !== clickedImage) {
-                    image.style.pointerEvents = 'auto';
-                }
-            });
-            
-            const cleanedData = data.replace(/<br>/g, ''); // Remove <br> tags from the data
-            const skippedTracks = cleanedData.match(/Skipped track: .+ by .+/g); // regex to match skipped tracks
-            console.log('Skipped Tracks:', skippedTracks);
-            if (skippedTracks) {
-                alert(skippedTracks.join('\n') + '\n\nSuccessfully shuffled tracks and cleared backup playlist. Successfully unfollowed backup playlist. Add the removed tracks back to the playlist if needed.');
+            if (skipped && skipped.length > 0) {
+                let message = `Playlist shuffled with ${skipped.length} skipped track(s):\n\n`;
+                skipped.forEach(line => {
+                    message += line + '\n';
+                });
+                showToast(message);
             } else {
-                alert('No skipped tracks were found in the playlist.');
+                showToast('Playlist shuffled successfully!');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            // Enable other shuffle buttons even if there's an error
-            allPlaylistImages.forEach(image => {
-                if (image !== clickedImage) {
-                    image.style.pointerEvents = 'auto';
-                }
+        .catch(err => {
+            console.error('Shuffle error:', err);
+            if (loader) {
+                loader.style.display = 'none';
+            }
+            showToast('Error during shuffle: ' + err.message);
+        })
+        .finally(() => {
+            // Re-enable all playlist cards
+            cards.forEach(card => {
+                card.style.pointerEvents = 'auto';
+                card.style.opacity = '';
             });
+
+            window.isShuffling = false;
+            console.log('Shuffle finished, UI re-enabled.');
         });
+}
+
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
 }

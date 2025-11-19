@@ -1,11 +1,19 @@
 <?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+// load environment
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 session_start();
 
-// Unset the access token
-if (isset($_SESSION['access_token'])) {
-    unset($_SESSION['access_token']);
-}
+// Clear only Spotify-related session values
+unset($_SESSION['access_token'], $_SESSION['refresh_token'], $_SESSION['token_expires']);
 
-// Redirect to the index page
+// Regenerate session ID (prevents session fixation)
+session_regenerate_id(true);
+
+// Redirect back to UI
 header('Location: ' . $_ENV['APP_URL'] . 'index.php');
 exit;
