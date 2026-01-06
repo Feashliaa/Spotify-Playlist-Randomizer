@@ -3,8 +3,9 @@ FROM php:8.2-apache
 RUN a2enmod rewrite
 
 # Install system deps needed by Composer
-RUN apt-get update && apt-get install -y unzip git \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo_pgsql
+
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
