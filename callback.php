@@ -2,9 +2,11 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-// load environment
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+// Load environment variables only if .env exists (local development)
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -21,7 +23,7 @@ function spotifyTokenRequest(array $payload): array
 
     // Build Basic Auth header
     $authHeader = 'Authorization: Basic ' . base64_encode(
-        $_ENV['CLIENT_ID'] . ':' . $_ENV['CLIENT_SECRET']
+        getenv('CLIENT_ID') . ':' . getenv('CLIENT_SECRET')
     );
 
     $headers = [
@@ -67,10 +69,12 @@ try {
     // -------------------------------------------------------------------------
     // Exchange code for access token
     // -------------------------------------------------------------------------
+    $appUrl = rtrim(getenv('APP_URL'), '/'); // ensures no double slashes
+
     $payload = [
         'grant_type'    => 'authorization_code',
         'code'          => $code,
-        'redirect_uri'  => $_ENV['APP_URL'] . 'callback.php',
+        'redirect_uri'  => $appUrl . '/callback.php',
     ];
 
     [$status, $response] = spotifyTokenRequest($payload);
@@ -89,7 +93,7 @@ try {
     // -------------------------------------------------------------------------
     // Redirect back to app
     // -------------------------------------------------------------------------
-    header('Location: ' . $_ENV['APP_URL'] . 'index.php');
+    header('Location: ' . $appUrl . '/index.php');
     exit;
 } catch (Throwable $e) {
     http_response_code(500);

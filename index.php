@@ -1,9 +1,11 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
 
-// Load environment
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+// Load environment variables only if .env exists (local development)
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -12,7 +14,7 @@ error_reporting(E_ALL);
 session_start();
 
 /**
- * Simple GET request helper for Spotify API
+ * GET request helper for Spotify API
  */
 function spotifyGet(string $url, string $accessToken): array
 {
@@ -69,10 +71,11 @@ function fetchUserPlaylists(string $accessToken): ?array
 // -----------------------------------------------------------------------------
 // Build login URL
 // -----------------------------------------------------------------------------
-$clientID     = $_ENV['CLIENT_ID'];
-$redirectURL  = $_ENV['APP_URL'] . 'callback.php';
-$scopes       = 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
-$state        = bin2hex(random_bytes(16));
+$clientID    = getenv('CLIENT_ID');
+$appUrl      = rtrim(getenv('APP_URL'), '/'); // ensures no double slashes
+$redirectURL = $appUrl . '/callback.php';
+$scopes      = 'user-read-private playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public';
+$state       = bin2hex(random_bytes(16));
 
 $authURL = 'https://accounts.spotify.com/authorize?' . http_build_query([
     'response_type' => 'code',
@@ -83,10 +86,9 @@ $authURL = 'https://accounts.spotify.com/authorize?' . http_build_query([
     'show_dialog'   => 'true'
 ]);
 
-$loggedIn  = isset($_SESSION['access_token']);
+$loggedIn    = isset($_SESSION['access_token']);
 $accessToken = $_SESSION['access_token'] ?? null;
-$userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
-
+$userData    = $loggedIn ? fetchUserProfile($accessToken) : null;
 ?>
 <!DOCTYPE html>
 <html>
@@ -124,7 +126,6 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
             echo '<div class="spacer"></div>';
             echo '<h1>Spotify Playlist Shuffler</h1>';
 
-            // Username display
             if ($loggedIn && isset($userData['display_name'])) {
                 echo '<div class="username">User: ' . htmlspecialchars($userData['display_name']) . '</div>';
             } elseif ($loggedIn) {
@@ -137,9 +138,6 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
 
             <?php if ($loggedIn): ?>
                 <?php
-                // -----------------------------------------------------------------
-                // PLAYLISTS
-                // -----------------------------------------------------------------
                 $playlistData = fetchUserPlaylists($accessToken);
 
                 if (!$playlistData) {
@@ -153,9 +151,7 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
                     echo '<div class="playlist-container">';
 
                     foreach ($playlistData['items'] as $playlist) {
-                        if (($playlist['tracks']['total'] ?? 0) === 0) {
-                            continue;
-                        }
+                        if (($playlist['tracks']['total'] ?? 0) === 0) continue;
 
                         $playlistName = htmlspecialchars($playlist['name'] ?? 'Untitled');
                         $playlistId   = htmlspecialchars($playlist['id']);
@@ -166,7 +162,6 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
                         echo '<img src="' . $imageUrl . '" 
                               class="playlist-image"
                               onclick="shufflePlaylist(\'' . $playlistId . '\', this)">';
-
                         echo '<div class="song-counter">' . intval($playlist['tracks']['total']) . ' songs</div>';
                         echo '<div class="loader" id="loader-' . $playlistId . '"></div>';
                         echo '</div>';
@@ -179,10 +174,7 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
 
         </div>
 
-
         <div id="toast" class="toast"></div>
-
-
         <script src="script.js"></script>
 
         <form action="https://www.paypal.com/donate" method="post" target="_top" class="paypal-donate-form">
@@ -196,7 +188,6 @@ $userData  = $loggedIn ? fetchUserProfile($accessToken) : null;
                 name="submit"
                 alt="Donate with PayPal">
         </form>
-
     </div>
 
 </body>

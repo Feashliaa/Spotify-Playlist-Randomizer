@@ -2,7 +2,7 @@
 session_start();
 
 /**
- * Simple Spotify API request helper using cURL.
+ * Spotify API request helper using cURL.
  *
  * @param string      $method       HTTP method (GET, POST, PUT, DELETE)
  * @param string      $url          Full Spotify API URL
