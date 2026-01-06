@@ -1,24 +1,28 @@
 FROM php:8.2-apache
 
-# Enable Apache rewrite (often needed)
 RUN a2enmod rewrite
 
-# Install required PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql
+# Install system deps needed by Composer
+RUN apt-get update && apt-get install -y unzip git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
 
-# Copy only what PHP actually needs
+# Copy composer files first (better caching)
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy app files
 COPY index.php .
 COPY callback.php .
 COPY getPlaylistTracks.php .
 COPY logout.php .
-COPY vendor/ ./vendor
 COPY script.js .
 COPY style.css .
-COPY composer.json .
-COPY composer.lock .
 
-# Apache expects port 80
 EXPOSE 80
