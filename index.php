@@ -1,17 +1,34 @@
 <?php
+// -------------------- ERROR LOGGING --------------------
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_error.log');
+
+// -------------------- AUTOLOAD & ENV --------------------
 require __DIR__ . '/vendor/autoload.php';
 
-// Load environment variables only if .env exists (local development)
 if (file_exists(__DIR__ . '/.env')) {
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
     $dotenv->load();
 }
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+// -------------------- SESSION --------------------
 session_start();
+
+// -------------------- FATAL HANDLER --------------------
+set_exception_handler(function ($e) {
+    http_response_code(500);
+    echo '<h1>Fatal Error</h1>';
+    echo '<pre>' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</pre>';
+    error_log($e);
+    exit;
+});
+
+set_error_handler(function ($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
 
 /**
  * GET request helper for Spotify API
