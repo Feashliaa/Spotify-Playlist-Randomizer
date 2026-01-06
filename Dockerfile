@@ -24,5 +24,6 @@ COPY getPlaylistTracks.php .
 COPY logout.php .
 COPY script.js .
 COPY style.css .
+COPY setup_db.php .
 
 EXPOSE 80
