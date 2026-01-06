@@ -66,11 +66,11 @@ if (!isset($_GET['code']) || empty($_GET['code'])) {
 $code = $_GET['code'];
 
 try {
-    $appUrl = rtrim(getenv('APP_URL'), '/'); // ensures no double slashes
-
     // -------------------------------------------------------------------------
     // Exchange code for access token
     // -------------------------------------------------------------------------
+    $appUrl = rtrim(getenv('APP_URL'), '/'); // ensures no double slashes
+
     $payload = [
         'grant_type'    => 'authorization_code',
         'code'          => $code,
@@ -83,92 +83,12 @@ try {
         throw new RuntimeException('Spotify token exchange failed. HTTP ' . $status);
     }
 
-    $accessToken  = $response['access_token'];
-    $refreshToken = $response['refresh_token'] ?? null;
-    $expiresIn    = $response['expires_in'] ?? 3600;
-
     // -------------------------------------------------------------------------
-    // Fetch Spotify user profile
+    // Save tokens into session
     // -------------------------------------------------------------------------
-    $ch = curl_init('https://api.spotify.com/v1/me');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . $accessToken
-        ],
-        CURLOPT_TIMEOUT        => 15,
-    ]);
-
-    $profileResp = curl_exec($ch);
-    if ($profileResp === false) {
-        throw new RuntimeException('Failed to fetch user profile: ' . curl_error($ch));
-    }
-    curl_close($ch);
-
-    $profile = json_decode($profileResp, true);
-    if (empty($profile['id'])) {
-        throw new RuntimeException('Spotify user ID not found.');
-    }
-
-    $spotifyId   = $profile['id'];
-    $displayName = $profile['display_name'] ?? '(Unknown)';
-
-    // -------------------------------------------------------------------------
-    // Save to database if .env doesn't exist (Render deployment)
-    // -------------------------------------------------------------------------
-    if (!file_exists(__DIR__ . '/.env')) {
-        $dbHost = getenv('DB_HOSTNAME');
-        $dbPort = getenv('DB_PORT');
-        $dbName = getenv('DB_NAME');
-        $dbUser = getenv('DB_USERNAME');
-        $dbPass = getenv('DB_PASS');
-
-        $dsn = "pgsql:host=$dbHost;port=$dbPort;dbname=$dbName";
-        $pdo = new PDO($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
-
-        // Create table if it doesn't exist
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS spotify_users (
-                id SERIAL PRIMARY KEY,
-                spotify_id VARCHAR(50) UNIQUE NOT NULL,
-                display_name VARCHAR(100),
-                access_token TEXT NOT NULL,
-                refresh_token TEXT NOT NULL,
-                token_expires INT NOT NULL,
-                last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ");
-
-        // Upsert user token
-        $stmt = $pdo->prepare("
-            INSERT INTO spotify_users (spotify_id, display_name, access_token, refresh_token, token_expires, last_login)
-            VALUES (:spotify_id, :display_name, :access_token, :refresh_token, :token_expires, NOW())
-            ON CONFLICT (spotify_id)
-            DO UPDATE SET
-                display_name = EXCLUDED.display_name,
-                access_token = EXCLUDED.access_token,
-                refresh_token = EXCLUDED.refresh_token,
-                token_expires = EXCLUDED.token_expires,
-                last_login = NOW();
-        ");
-
-        $stmt->execute([
-            ':spotify_id'   => $spotifyId,
-            ':display_name' => $displayName,
-            ':access_token' => $accessToken,
-            ':refresh_token' => $refreshToken,
-            ':token_expires' => time() + $expiresIn
-        ]);
-    }
-
-    // -------------------------------------------------------------------------
-    // Save session for app
-    // -------------------------------------------------------------------------
-    $_SESSION['spotify_id']   = $spotifyId;
-    $_SESSION['access_token'] = $accessToken;
-    $_SESSION['token_expires'] = time() + $expiresIn;
+    $_SESSION['access_token']  = $response['access_token'];
+    $_SESSION['refresh_token'] = $response['refresh_token'] ?? null;
+    $_SESSION['token_expires'] = time() + ($response['expires_in'] ?? 3600);
 
     // -------------------------------------------------------------------------
     // Redirect back to app

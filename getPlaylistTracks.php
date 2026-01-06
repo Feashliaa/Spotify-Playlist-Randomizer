@@ -3,12 +3,22 @@ session_start();
 
 /**
  * Spotify API request helper using cURL.
+ *
+ * @param string      $method       HTTP method (GET, POST, PUT, DELETE)
+ * @param string      $url          Full Spotify API URL
+ * @param string      $accessToken  OAuth access token
+ * @param array|null  $payload      Optional JSON payload
+ *
+ * @return array [int $statusCode, array|null $body]
+ * @throws RuntimeException on transport errors
  */
 function spotifyRequest(string $method, string $url, string $accessToken, ?array $payload = null): array
 {
     $ch = curl_init($url);
 
-    $headers = ['Authorization: Bearer ' . $accessToken];
+    $headers = [
+        'Authorization: Bearer ' . $accessToken,
+    ];
 
     if ($payload !== null) {
         $headers[] = 'Content-Type: application/json';
@@ -33,122 +43,54 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
     $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    return [$statusCode, json_decode($response, true)];
+    $decoded = json_decode($response, true);
+    return [$statusCode, $decoded];
 }
 
 /**
  * Add tracks to a playlist in chunks of 100 URIs.
+ *
+ * @param string $playlistId
+ * @param array  $uris
+ * @param string $accessToken
+ *
+ * @throws RuntimeException
  */
 function addTracksInChunks(string $playlistId, array $uris, string $accessToken): void
 {
-    if (empty($uris)) return;
+    if (empty($uris)) {
+        return;
+    }
 
-    $apiUrl = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks";
-    $chunks = array_chunk($uris, 100);
+    $apiUrl    = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks";
+    $uriChunks = array_chunk($uris, 100);
 
-    foreach ($chunks as $chunk) {
-        [$status,] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
+    foreach ($uriChunks as $chunk) {
+        [$status, $body] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
+
         if ($status < 200 || $status >= 300) {
-            throw new RuntimeException('Failed to add tracks (HTTP ' . $status . ')');
+            throw new RuntimeException(
+                'Failed to add tracks to playlist (HTTP ' . $status . ')'
+            );
         }
     }
 }
 
-/**
- * Refresh token helper
- */
-function refreshSpotifyToken(string $refreshToken): array
-{
-    $url  = 'https://accounts.spotify.com/api/token';
-    $auth = 'Authorization: Basic ' . base64_encode(getenv('CLIENT_ID') . ':' . getenv('CLIENT_SECRET'));
-
-    $payload = ['grant_type' => 'refresh_token', 'refresh_token' => $refreshToken];
-
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query($payload),
-        CURLOPT_HTTPHEADER => [$auth, 'Content-Type: application/x-www-form-urlencoded'],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 15,
-    ]);
-
-    $response = curl_exec($ch);
-    if ($response === false) throw new RuntimeException('Spotify token refresh failed: ' . curl_error($ch));
-
-    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $data = json_decode($response, true);
-    if ($status < 200 || $status >= 300 || empty($data['access_token'])) {
-        throw new RuntimeException('Spotify token refresh failed (HTTP ' . $status . ')');
-    }
-
-    return $data;
-}
-
 // -----------------------------------------------------------------------------
-// Get access token
+// Main script
 // -----------------------------------------------------------------------------
-$accessToken = null;
 
-if (!isset($_SESSION['spotify_id'])) {
+if (!isset($_SESSION['access_token'])) {
     http_response_code(401);
     echo 'Not authenticated.';
     exit;
 }
 
-$spotifyId = $_SESSION['spotify_id'];
+$accessToken = $_SESSION['access_token'];
 
-// Local dev uses session only
-if (file_exists(__DIR__ . '/.env')) {
-    $accessToken = $_SESSION['access_token'] ?? null;
-} else {
-    $pdo = new PDO(
-        "pgsql:host=" . getenv('DB_HOSTNAME') . ";port=" . getenv('DB_PORT') . ";dbname=" . getenv('DB_NAME'),
-        getenv('DB_USERNAME'),
-        getenv('DB_PASS'),
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-
-    $stmt = $pdo->prepare("SELECT * FROM spotify_users WHERE spotify_id = :spotify_id");
-    $stmt->execute([':spotify_id' => $spotifyId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$user) {
-        http_response_code(401);
-        echo 'User not found in database.';
-        exit;
-    }
-
-    $accessToken = $user['access_token'];
-
-    if (time() > $user['token_expires']) {
-        $newTokens = refreshSpotifyToken($user['refresh_token']);
-        $accessToken = $newTokens['access_token'];
-        $expiresIn = $newTokens['expires_in'] ?? 3600;
-
-        $update = $pdo->prepare("
-            UPDATE spotify_users
-            SET access_token = :access_token, token_expires = :token_expires
-            WHERE spotify_id = :spotify_id
-        ");
-        $update->execute([
-            ':access_token' => $accessToken,
-            ':token_expires' => time() + $expiresIn,
-            ':spotify_id' => $spotifyId
-        ]);
-
-        $_SESSION['access_token'] = $accessToken;
-        $_SESSION['token_expires'] = time() + $expiresIn;
-    }
-}
-
-// -----------------------------------------------------------------------------
-// Proceed with original shuffle logic
-// -----------------------------------------------------------------------------
+// Basic validation for playlist_id
 $rawPlaylistId = $_GET['playlist_id'] ?? '';
-$playlistId = preg_replace('/[^A-Za-z0-9]/', '', $rawPlaylistId);
+$playlistId    = preg_replace('/[^A-Za-z0-9]/', '', $rawPlaylistId);
 
 if ($playlistId === '') {
     http_response_code(400);

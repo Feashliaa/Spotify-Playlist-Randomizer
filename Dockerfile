@@ -27,7 +27,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
 # Copy app files
-COPY index.php callback.php getPlaylistTracks.php logout.php setup_db.php script.js style.css ./
+COPY index.php callback.php getPlaylistTracks.php logout.php script.js style.css ./
 
 # Expose Apache port
 EXPOSE 80
