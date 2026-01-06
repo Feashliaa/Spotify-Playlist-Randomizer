@@ -6,7 +6,7 @@ A simple web app that **truly shuffles** your Spotify playlists by reordering th
 
 ## Why This Exists
 
-Spotify's shuffle isn't random—it uses an algorithm that tends to play certain songs more often. This tool actually reorders the tracks in your playlist, so when you play it straight through (no shuffle), you get a truly randomized experience.
+Spotify's shuffle isn't random, it uses an algorithm that tends to play certain songs more often. This tool actually reorders the tracks in your playlist, so when you play it straight through (no shuffle), you get a truly randomized experience.
 
 ## Features
 
@@ -149,7 +149,7 @@ Just run it on your own machine when you need it. No hosting required.
 
 ## License
 
-MIT — Do whatever you want with it.
+MIT: Do whatever you want with it.
 
 ## Acknowledgments
 
