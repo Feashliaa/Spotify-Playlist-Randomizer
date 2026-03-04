@@ -86,7 +86,7 @@ if (!isset($_SESSION['access_token'])) {
     exit;
 }
 
-$accessToken = $_SESSION['access_token'];
+$accessToken = getValidAccessToken();
 
 // Basic validation for playlist_id
 $rawPlaylistId = $_GET['playlist_id'] ?? '';
@@ -279,4 +279,53 @@ try {
 } catch (Throwable $e) {
     http_response_code(500);
     echo 'Error: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+}
+
+
+function getValidAccessToken(): string
+{
+    if (!isset($_SESSION['access_token'])) {
+        http_response_code(401);
+        exit('Not authenticated.');
+    }
+
+    // Refresh 60 seconds early to avoid edge cases
+    if (time() >= ($_SESSION['token_expires'] - 60)) {
+        $refreshToken = $_SESSION['refresh_token'] ?? null;
+        if (!$refreshToken) {
+            http_response_code(401);
+            exit('Session expired. Please log in again.');
+        }
+
+        $ch = curl_init('https://accounts.spotify.com/api/token');
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Basic ' . base64_encode(getenv('CLIENT_ID') . ':' . getenv('CLIENT_SECRET')),
+                'Content-Type: application/x-www-form-urlencoded',
+            ],
+            CURLOPT_POSTFIELDS => http_build_query([
+                'grant_type'    => 'refresh_token',
+                'refresh_token' => $refreshToken,
+            ]),
+        ]);
+        $data = json_decode(curl_exec($ch), true);
+        curl_close($ch);
+
+        if (empty($data['access_token'])) {
+            http_response_code(401);
+            exit('Token refresh failed. Please log in again.');
+        }
+
+        $_SESSION['access_token']  = $data['access_token'];
+        $_SESSION['token_expires'] = time() + ($data['expires_in'] ?? 3600);
+
+        // Spotify only returns a new refresh_token sometimes
+        if (!empty($data['refresh_token'])) {
+            $_SESSION['refresh_token'] = $data['refresh_token'];
+        }
+    }
+
+    return $_SESSION['access_token'];
 }

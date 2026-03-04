@@ -32,12 +32,10 @@ function spotifyGet(string $url, string $accessToken): array
 
     if ($response === false) {
         $error = curl_error($ch);
-        curl_close($ch);
         throw new RuntimeException('Spotify API error: ' . $error);
     }
 
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     return [$status, json_decode($response, true)];
 }
