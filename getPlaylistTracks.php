@@ -127,7 +127,7 @@ try {
 
     // Retry once on 429
     for ($attempt = 0; $attempt < 2; $attempt++) {
-        [$status, $tracks] = spotifyRequest('GET', $url, $accessToken);
+        [$status, $tracks] = spotifyRequest('GET', $nextTracksUrl, $accessToken);
 
         if ($status === 429) {
             $retryAfter = intval($tracks['Retry-After'] ?? 2) + 1;
@@ -156,7 +156,7 @@ try {
 
         // Non-local tracks (have external Spotify URL)
         if (isset($track['external_urls']['spotify'])) {
-            $allTracks[] = $item;
+            $uris[] = $track['uri'];
         } else {
             $artists = array_column($track['artists'] ?? [], 'name');
             $skipped[] = ($track['name'] ?? 'Unknown Track') . ' by ' . implode(', ', $artists);
