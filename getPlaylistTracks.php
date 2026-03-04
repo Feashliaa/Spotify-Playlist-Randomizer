@@ -127,10 +127,10 @@ try {
 
     // Retry once on 429
     for ($attempt = 0; $attempt < 2; $attempt++) {
-        [$status, $data] = spotifyRequest('GET', $url, $accessToken);
+        [$status, $tracks] = spotifyRequest('GET', $url, $accessToken);
 
         if ($status === 429) {
-            $retryAfter = intval($data['Retry-After'] ?? 2) + 1;
+            $retryAfter = intval($tracks['Retry-After'] ?? 2) + 1;
             sleep($retryAfter);
             continue;
         }
@@ -144,7 +144,7 @@ try {
 
     $uris = [];
     $skipped = [];
-    $items = $data['items'] ?? [];
+    $items = $tracks['items'] ?? [];
 
     foreach ($items as $item) {
         // Skip items without a proper track object
@@ -166,8 +166,8 @@ try {
     echo json_encode([
         'uris'        => $uris,
         'skipped'     => $skipped,
-        'total'       => $data['total'],
-        'next_offset' => ($data['next'] !== null) ? $offset + 100 : null,
+        'total'       => $tracks['total'],
+        'next_offset' => ($tracks['next'] !== null) ? $offset + 100 : null,
     ]);
 } catch (Throwable $e) {
     http_response_code(500);
