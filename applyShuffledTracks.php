@@ -19,6 +19,7 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
         CURLOPT_CUSTOMREQUEST  => $method,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 20,
+        CURLOPT_HEADER         => true,
     ]);
 
     $response = curl_exec($ch);
@@ -29,9 +30,17 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
     }
 
     $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $decoded    = json_decode($response, true);
+    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $headerBlock = substr($response, 0, $headerSize);
+    $body       = substr($response, $headerSize);
+    $decoded    = json_decode($body, true);
 
-    return [$statusCode, $decoded];
+    $retryAfter = 5; // default retry after 5 seconds
+    if (preg_match('/Retry-After:\s*(\d+)/i', $headerBlock, $m)) {
+        $retryAfter = (int)$m[1];
+    }
+
+    return [$statusCode, $decoded, $retryAfter];
 }
 
 function getValidAccessToken(): string
@@ -90,11 +99,11 @@ function addTracksInChunks(string $playlistId, array $uris, string $accessToken)
     $apiUrl = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks";
 
     foreach (array_chunk($uris, 100) as $chunk) {
-        for ($attempt = 0; $attempt < 3; $attempt++) {
-            [$status, $body] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            [$status, $body, $retryAfter] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
 
             if ($status === 429) {
-                sleep(intval($body['Retry-After'] ?? 2) + 1);
+                sleep($retryAfter + 1);
                 continue;
             }
 

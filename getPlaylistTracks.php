@@ -42,7 +42,7 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
 
 
     $decoded = json_decode($response, true);
-    return [$statusCode, $decoded];
+    return [$statusCode, $decoded, $retryAfter];
 }
 function getValidAccessToken(): string
 {
