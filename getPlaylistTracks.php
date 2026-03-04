@@ -21,6 +21,7 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
         CURLOPT_CUSTOMREQUEST  => $method,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 20,
+        CURLOPT_HEADER         => true,
     ]);
 
     $response = curl_exec($ch);
@@ -29,8 +30,16 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
         $error = curl_error($ch);
         throw new RuntimeException('HTTP request failed: ' . $error);
     }
-
     $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $headerBlock = substr($response, 0, $headerSize);
+    $body       = substr($response, $headerSize);
+
+    $retryAfter = 5; // default retry after 5 seconds
+    if (preg_match('/Retry-After:\s*(\d+)/i', $headerBlock, $m)) {
+        $retryAfter = (int)$m[1];
+    }
+
 
     $decoded = json_decode($response, true);
     return [$statusCode, $decoded];
@@ -126,12 +135,11 @@ try {
 
 
     // Retry once on 429
-    for ($attempt = 0; $attempt < 2; $attempt++) {
-        [$status, $tracks] = spotifyRequest('GET', $nextTracksUrl, $accessToken);
+    for ($attempt = 0; $attempt < 5; $attempt++) {
+        [$status, $tracks, $retryAfter] = spotifyRequest('GET', $nextTracksUrl, $accessToken);
 
         if ($status === 429) {
-            $retryAfter = intval($tracks['Retry-After'] ?? 2) + 1;
-            sleep($retryAfter);
+            sleep($retryAfter + 1);
             continue;
         }
 
