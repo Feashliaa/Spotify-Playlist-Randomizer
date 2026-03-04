@@ -7,9 +7,7 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
 {
     $ch = curl_init($url);
 
-    $headers = [
-        'Authorization: Bearer ' . $accessToken,
-    ];
+    $headers = ['Authorization: Bearer ' . $accessToken];
 
     if ($payload !== null) {
         $headers[] = 'Content-Type: application/json';
@@ -31,23 +29,25 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
     }
 
     $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $decoded    = json_decode($response, true);
 
-    $decoded = json_decode($response, true);
     return [$statusCode, $decoded];
 }
+
 function getValidAccessToken(): string
 {
     if (!isset($_SESSION['access_token'])) {
         http_response_code(401);
-        exit('Not authenticated.');
+        echo json_encode(['error' => 'Not authenticated.']);
+        exit;
     }
 
-    // Refresh 60 seconds early to avoid edge cases
     if (time() >= ($_SESSION['token_expires'] - 60)) {
         $refreshToken = $_SESSION['refresh_token'] ?? null;
         if (!$refreshToken) {
             http_response_code(401);
-            exit('Session expired. Please log in again.');
+            echo json_encode(['error' => 'Session expired. Please log in again.']);
+            exit;
         }
 
         $ch = curl_init('https://accounts.spotify.com/api/token');
@@ -63,17 +63,18 @@ function getValidAccessToken(): string
                 'refresh_token' => $refreshToken,
             ]),
         ]);
+
         $data = json_decode(curl_exec($ch), true);
 
         if (empty($data['access_token'])) {
             http_response_code(401);
-            exit('Token refresh failed. Please log in again.');
+            echo json_encode(['error' => 'Token refresh failed. Please log in again.']);
+            exit;
         }
 
         $_SESSION['access_token']  = $data['access_token'];
         $_SESSION['token_expires'] = time() + ($data['expires_in'] ?? 3600);
 
-        // Spotify only returns a new refresh_token sometimes
         if (!empty($data['refresh_token'])) {
             $_SESSION['refresh_token'] = $data['refresh_token'];
         }
@@ -84,91 +85,69 @@ function getValidAccessToken(): string
 
 function addTracksInChunks(string $playlistId, array $uris, string $accessToken): void
 {
-    if (empty($uris)) {
-        return;
-    }
+    if (empty($uris)) return;
 
-    $apiUrl    = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks";
-    $uriChunks = array_chunk($uris, 100);
+    $apiUrl = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks";
 
-    foreach ($uriChunks as $chunk) {
-        [$status, $body] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
+    foreach (array_chunk($uris, 100) as $chunk) {
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            [$status, $body] = spotifyRequest('POST', $apiUrl, $accessToken, ['uris' => $chunk]);
 
-        if ($status < 200 || $status >= 300) {
-            throw new RuntimeException(
-                'Failed to add tracks to playlist (HTTP ' . $status . ')'
-            );
+            if ($status === 429) {
+                sleep(intval($body['Retry-After'] ?? 2) + 1);
+                continue;
+            }
+
+            if ($status < 200 || $status >= 300) {
+                throw new RuntimeException('Failed to add tracks (HTTP ' . $status . ').');
+            }
+
+            break;
         }
     }
 }
 
 // -----------------------------------------------------------------------------
-// Main script
+// Main
 // -----------------------------------------------------------------------------
+
 $accessToken = getValidAccessToken();
 
-// Basic validation for playlist_id
-$rawPlaylistId = $_GET['playlist_id'] ?? '';
+$body = json_decode(file_get_contents('php://input'), true);
+
+$rawPlaylistId = $body['playlist_id'] ?? '';
 $playlistId    = preg_replace('/[^A-Za-z0-9]/', '', $rawPlaylistId);
-$offset = max(0, intval($_GET['offset'] ?? 0));
+$uris          = $body['uris'] ?? [];
 
 if ($playlistId === '') {
     http_response_code(400);
-    echo 'Missing or invalid playlist_id.';
+    echo json_encode(['error' => 'Missing or invalid playlist_id.']);
+    exit;
+}
+
+if (empty($uris) || !is_array($uris)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No URIs provided.']);
     exit;
 }
 
 try {
-    // -------------------------------------------------------------------------
-    // 1. Fetch all tracks in the playlist (handle pagination)
-    // -------------------------------------------------------------------------
-    $nextTracksUrl = "https://api.spotify.com/v1/playlists/{$playlistId}/tracks?limit=100&offset={$offset}";
+    // Clear the playlist
+    [$status,] = spotifyRequest(
+        'PUT',
+        "https://api.spotify.com/v1/playlists/{$playlistId}/tracks",
+        $accessToken,
+        ['uris' => []]
+    );
 
-
-    // Retry once on 429
-    for ($attempt = 0; $attempt < 2; $attempt++) {
-        [$status, $data] = spotifyRequest('GET', $url, $accessToken);
-
-        if ($status === 429) {
-            $retryAfter = intval($data['Retry-After'] ?? 2) + 1;
-            sleep($retryAfter);
-            continue;
-        }
-
-        break;
+    if ($status < 200 || $status >= 300) {
+        throw new RuntimeException('Failed to clear playlist (HTTP ' . $status . ').');
     }
 
-    if ($status !== 200 || !is_array($tracks)) {
-        throw new RuntimeException('Failed to fetch tracks (HTTP ' . $status . '). Response: ' . json_encode($tracks));
-    }
+    // Add shuffled tracks back
+    addTracksInChunks($playlistId, $uris, $accessToken);
 
-    $uris = [];
-    $skipped = [];
-    $items = $data['items'] ?? [];
-
-    foreach ($items as $item) {
-        // Skip items without a proper track object
-        if (!isset($item['track'])) {
-            continue;
-        }
-
-        $track = $item['track'];
-
-        // Non-local tracks (have external Spotify URL)
-        if (isset($track['external_urls']['spotify'])) {
-            $allTracks[] = $item;
-        } else {
-            $artists = array_column($track['artists'] ?? [], 'name');
-            $skipped[] = ($track['name'] ?? 'Unknown Track') . ' by ' . implode(', ', $artists);
-        }
-    }
-
-    echo json_encode([
-        'uris'        => $uris,
-        'skipped'     => $skipped,
-        'total'       => $data['total'],
-        'next_offset' => ($data['next'] !== null) ? $offset + 100 : null,
-    ]);
+    echo json_encode(['success' => true]);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

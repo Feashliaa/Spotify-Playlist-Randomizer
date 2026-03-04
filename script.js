@@ -3,85 +3,154 @@ if (typeof window.isShuffling === 'undefined') {
     window.isShuffling = false;
 }
 
-function shufflePlaylist(playlistId, clickedImage) {
-    console.log('shufflePlaylist called for', playlistId);
-
-    if (window.isShuffling) {
-        console.log('Shuffle blocked: already shuffling.');
-        return;
-    }
+async function shufflePlaylist(playlistId, clickedImage) {
+    if (window.isShuffling) return;
     window.isShuffling = true;
-    console.log('Shuffle started.');
 
     const cards = document.querySelectorAll('.playlist');
     const loader = document.getElementById('loader-' + playlistId);
 
-    console.log('Disabling UI elements during shuffle...');
-    for (const card of cards) {
-        console.log('Disabling card:', card);
-    }
-
-    // Disable ALL playlist cards (no clicks anywhere inside them)
+    // Disable all cards
     cards.forEach(card => {
         card.style.pointerEvents = 'none';
         card.style.opacity = '0.5';
     });
 
-    if (loader) {
-        loader.style.display = 'block';
-    }
+    if (loader) loader.style.display = 'block';
 
-    fetch(`getPlaylistTracks.php?playlist_id=${encodeURIComponent(playlistId)}`)
-        .then(response => {
+    const originalUris = [];
+    const skippedTracks = [];
+    let offset = 0;
+    let total = null;
+
+    try {
+        // ----------------------------------------------------------------
+        // 1. Fetch all pages
+        // ----------------------------------------------------------------
+        do {
+            const url = `getPlaylistTracks.php?playlist_id=${encodeURIComponent(playlistId)}&offset=${offset}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error(`Request failed: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(rawText => {
-            if (loader) {
-                loader.style.display = 'none';
+                throw new Error(data.error || `Failed to fetch tracks (HTTP ${response.status})`);
             }
 
-            const text = rawText.replace(/<br\s*\/?>/gi, '').trim();
-            const skipped = text.match(/Skipped track:\s.*? by .*?(?=$|\n)/g);
+            originalUris.push(...data.uris);
+            skippedTracks.push(...(data.skipped || []));
 
-            if (skipped && skipped.length > 0) {
-                let message = `Playlist shuffled with ${skipped.length} skipped track(s):\n\n`;
-                skipped.forEach(line => {
-                    message += line + '\n';
-                });
-                showToast(message);
-            } else {
-                showToast('Playlist shuffled successfully!');
-            }
-        })
-        .catch(err => {
-            console.error('Shuffle error:', err);
-            if (loader) {
-                loader.style.display = 'none';
-            }
-            showToast('Error during shuffle: ' + err.message);
-        })
-        .finally(() => {
-            // Re-enable all playlist cards
-            cards.forEach(card => {
-                card.style.pointerEvents = 'auto';
-                card.style.opacity = '';
-            });
+            if (total === null) total = data.total;
 
-            window.isShuffling = false;
-            console.log('Shuffle finished, UI re-enabled.');
+            // Update progress
+            const fetched = Math.min(originalUris.length, total);
+            showToast(`Fetching tracks… ${fetched} / ${total}`, true);
+
+            offset = data.next_offset;
+
+        } while (offset !== null);
+
+        if (originalUris.length === 0) {
+            throw new Error('No playable tracks found in this playlist.');
+        }
+
+        // ----------------------------------------------------------------
+        // 2. Shuffle a copy client-side
+        // ----------------------------------------------------------------
+        const shuffledUris = [...originalUris];
+        for (let i = shuffledUris.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledUris[i], shuffledUris[j]] = [shuffledUris[j], shuffledUris[i]];
+        }
+
+        showToast('Applying shuffle…', true);
+
+        // ----------------------------------------------------------------
+        // 3. Send shuffled URIs to server
+        // ----------------------------------------------------------------
+        const applyResponse = await fetch('applyShuffledTracks.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playlist_id: playlistId, uris: shuffledUris }),
         });
+
+        const applyData = await applyResponse.json();
+
+        if (!applyResponse.ok) {
+            throw new Error(applyData.error || `Apply failed (HTTP ${applyResponse.status})`);
+        }
+
+        // ----------------------------------------------------------------
+        // 4. Success
+        // ----------------------------------------------------------------
+        let message = 'Playlist shuffled successfully!';
+        if (skippedTracks.length > 0) {
+            message += `\n\n${skippedTracks.length} local/unavailable track(s) skipped.`;
+        }
+        showToast(message);
+
+    } catch (err) {
+        console.error('Shuffle error:', err);
+
+        // Offer restore if we have the original URIs
+        if (originalUris.length > 0) {
+            showToastWithRestore(
+                `Error: ${err.message}. Restore original order?`,
+                async () => {
+                    showToast('Restoring…', true);
+                    try {
+                        const restoreResponse = await fetch('applyShuffledTracks.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ playlist_id: playlistId, uris: originalUris }),
+                        });
+                        const restoreData = await restoreResponse.json();
+                        if (!restoreResponse.ok) throw new Error(restoreData.error);
+                        showToast('Playlist restored to original order.');
+                    } catch (restoreErr) {
+                        showToast('Restore failed: ' + restoreErr.message);
+                    }
+                }
+            );
+        } else {
+            showToast('Error Sorry: ' + err.message);
+        }
+
+    } finally {
+        if (loader) loader.style.display = 'none';
+        cards.forEach(card => {
+            card.style.pointerEvents = 'auto';
+            card.style.opacity = '';
+        });
+        window.isShuffling = false;
+    }
 }
 
-
-function showToast(message) {
+function showToast(message, persistent = false) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
     toast.classList.add('show');
 
-    setTimeout(() => {
+    if (!persistent) {
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+}
+
+function showToastWithRestore(message, onRestore) {
+    const toast = document.getElementById('toast');
+    toast.innerHTML = '';
+
+    const text = document.createElement('span');
+    text.textContent = message + ' ';
+    toast.appendChild(text);
+
+    const btn = document.createElement('button');
+    btn.textContent = 'Restore';
+    btn.style.cssText = 'margin-left:8px;padding:4px 10px;cursor:pointer;border:1px solid #fff;background:transparent;color:#fff;border-radius:4px;font-size:0.85em;';
+    btn.onclick = () => {
         toast.classList.remove('show');
-    }, 3000);
+        onRestore();
+    };
+    toast.appendChild(btn);
+
+    toast.classList.add('show');
 }
