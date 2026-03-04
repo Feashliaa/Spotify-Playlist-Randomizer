@@ -36,12 +36,10 @@ function spotifyRequest(string $method, string $url, string $accessToken, ?array
 
     if ($response === false) {
         $error = curl_error($ch);
-        curl_close($ch);
         throw new RuntimeException('HTTP request failed: ' . $error);
     }
 
     $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     $decoded = json_decode($response, true);
     return [$statusCode, $decoded];
@@ -110,8 +108,15 @@ try {
     while ($nextTracksUrl !== null) {
         [$status, $tracks] = spotifyRequest('GET', $nextTracksUrl, $accessToken);
 
+        if ($status === 429) {
+            // Spotify tells you how long to wait
+            $retryAfter = $tracks['Retry-After'] ?? 2;
+            sleep((int)$retryAfter + 1);
+            continue; // retry the same URL
+        }
+
         if ($status !== 200 || !is_array($tracks)) {
-            throw new RuntimeException('Failed to fetch tracks (HTTP ' . $status . ').');
+            throw new RuntimeException('Failed to fetch tracks (HTTP ' . $status . '). Response: ' . json_encode($tracks));
         }
 
         if (empty($tracks['items']) || !is_array($tracks['items'])) {
@@ -311,7 +316,6 @@ function getValidAccessToken(): string
             ]),
         ]);
         $data = json_decode(curl_exec($ch), true);
-        curl_close($ch);
 
         if (empty($data['access_token'])) {
             http_response_code(401);
